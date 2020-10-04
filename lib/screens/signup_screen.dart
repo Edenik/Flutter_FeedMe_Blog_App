@@ -1,5 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart' as auth;
 import 'package:flutter/material.dart';
+import 'package:flutter_feedme_app/utils/snackbar_util.dart';
+import 'package:flutter_feedme_app/widgets/auth_flat_button_widget.dart';
+import 'package:flutter_feedme_app/widgets/auth_text_input_widget.dart';
 
 class SignupScreen extends StatefulWidget {
   @override
@@ -11,7 +14,7 @@ class _SignupScreenState extends State<SignupScreen> {
   TextEditingController _emailController = TextEditingController();
   TextEditingController _passwordController = TextEditingController();
   TextEditingController _passwordConfirmController = TextEditingController();
-
+  SnackBarUtil _snackBarUtil = SnackBarUtil();
   GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   auth.FirebaseAuth _firebaseAuth = auth.FirebaseAuth.instance;
   bool _isLoading = false;
@@ -19,21 +22,11 @@ class _SignupScreenState extends State<SignupScreen> {
   _signup() async {
     if (_passwordConfirmController.text.trim() !=
         _passwordController.text.trim()) {
-      _scaffoldKey.currentState.showSnackBar(
-        SnackBar(
-          content: Text('Passwords do not match!'),
-        ),
-      );
+      _snackBarUtil.sendSnack(_scaffoldKey, 'Passwords do not match!');
       return;
     }
 
-    _scaffoldKey.currentState.removeCurrentSnackBar();
-    _scaffoldKey.currentState.showSnackBar(
-      SnackBar(
-        content: Text("Creating your account..."),
-      ),
-    );
-
+    _snackBarUtil.sendSnack(_scaffoldKey, 'Creating your account...');
     setState(() {
       _isLoading = true;
     });
@@ -45,19 +38,11 @@ class _SignupScreenState extends State<SignupScreen> {
 
       await _user.user.updateProfile(displayName: _nameController.text.trim());
 
-      _scaffoldKey.currentState.removeCurrentSnackBar();
-      _scaffoldKey.currentState.showSnackBar(
-        SnackBar(
-          content: Text("Your account has been created successfully."),
-        ),
-      );
+      _snackBarUtil.sendSnack(
+          _scaffoldKey, 'Your account has been created successfully.');
     } catch (error) {
-      _scaffoldKey.currentState.removeCurrentSnackBar();
-      _scaffoldKey.currentState.showSnackBar(
-        SnackBar(
-          content: Text((error as auth.FirebaseException).message),
-        ),
-      );
+      _snackBarUtil.sendSnack(
+          _scaffoldKey, (error as auth.FirebaseException).message);
     } finally {
       setState(() {
         _isLoading = false;
@@ -81,237 +66,44 @@ class _SignupScreenState extends State<SignupScreen> {
               color: Colors.white,
             ),
           ),
-          Container(
-            margin:
-                const EdgeInsets.symmetric(vertical: 10.0, horizontal: 20.0),
-            padding: const EdgeInsets.all(4.0),
-            decoration: BoxDecoration(
-                border: Border.all(
-                    color: Colors.white.withOpacity(0.5), width: 1.0),
-                borderRadius: BorderRadius.circular(20.0)),
-            child: Row(
-              children: <Widget>[
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                      vertical: 10.0, horizontal: 15.0),
-                  child: Icon(
-                    Icons.person,
-                    color: Colors.white,
-                  ),
-                ),
-                Container(
-                  height: 30.0,
-                  width: 1.0,
-                  color: Colors.white.withOpacity(0.5),
-                  margin: const EdgeInsets.only(right: 10.0),
-                ),
-                Expanded(
-                  child: TextFormField(
-                    controller: _nameController,
-                    style: TextStyle(color: Colors.white),
-                    decoration: InputDecoration(
-                        border: InputBorder.none,
-                        hintText: "Enter your name",
-                        hintStyle: TextStyle(
-                          color: Colors.white.withOpacity(0.5),
-                        )),
-                  ),
-                ),
-              ],
-            ),
+          AuthTextInput(
+            controller: _nameController,
+            icon: Icons.person,
+            hintText: "Enter your name",
           ),
-          Container(
-            margin:
-                const EdgeInsets.symmetric(vertical: 10.0, horizontal: 20.0),
-            padding: const EdgeInsets.all(4.0),
-            decoration: BoxDecoration(
-                border: Border.all(
-                    color: Colors.white.withOpacity(0.5), width: 1.0),
-                borderRadius: BorderRadius.circular(20.0)),
-            child: Row(
-              children: <Widget>[
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                      vertical: 10.0, horizontal: 15.0),
-                  child: Icon(
-                    Icons.alternate_email,
-                    color: Colors.white,
-                  ),
-                ),
-                Container(
-                  height: 30.0,
-                  width: 1.0,
-                  color: Colors.white.withOpacity(0.5),
-                  margin: const EdgeInsets.only(right: 10.0),
-                ),
-                Expanded(
-                  child: TextFormField(
-                    controller: _emailController,
-                    style: TextStyle(color: Colors.white),
-                    decoration: InputDecoration(
-                        border: InputBorder.none,
-                        hintText: "Enter your email",
-                        hintStyle: TextStyle(
-                          color: Colors.white.withOpacity(0.5),
-                        )),
-                  ),
-                ),
-              ],
-            ),
+          AuthTextInput(
+            controller: _emailController,
+            icon: Icons.alternate_email,
+            hintText: "Enter your email",
           ),
-          Container(
-            margin:
-                const EdgeInsets.symmetric(vertical: 10.0, horizontal: 20.0),
-            padding: const EdgeInsets.all(4.0),
-            decoration: BoxDecoration(
-                border: Border.all(
-                    color: Colors.white.withOpacity(0.5), width: 1.0),
-                borderRadius: BorderRadius.circular(20.0)),
-            child: Row(
-              children: <Widget>[
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                      vertical: 10.0, horizontal: 15.0),
-                  child: Icon(
-                    Icons.lock_open,
-                    color: Colors.white,
-                  ),
-                ),
-                Container(
-                  height: 30.0,
-                  width: 1.0,
-                  color: Colors.white.withOpacity(0.5),
-                  margin: const EdgeInsets.only(right: 10.0),
-                ),
-                Expanded(
-                  child: TextFormField(
-                    controller: _passwordController,
-                    obscureText: true,
-                    style: TextStyle(color: Colors.white),
-                    decoration: InputDecoration(
-                        border: InputBorder.none,
-                        hintText: "Enter your password",
-                        hintStyle: TextStyle(
-                          color: Colors.white.withOpacity(0.5),
-                        )),
-                  ),
-                ),
-              ],
-            ),
+          AuthTextInput(
+            controller: _passwordController,
+            icon: Icons.lock_open,
+            hintText: "Enter your password",
+            obscureText: true,
           ),
-          Container(
-            margin:
-                const EdgeInsets.symmetric(vertical: 10.0, horizontal: 20.0),
-            padding: const EdgeInsets.all(4.0),
-            decoration: BoxDecoration(
-                border: Border.all(
-                    color: Colors.white.withOpacity(0.5), width: 1.0),
-                borderRadius: BorderRadius.circular(20.0)),
-            child: Row(
-              children: <Widget>[
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                      vertical: 10.0, horizontal: 15.0),
-                  child: Icon(
-                    Icons.lock_open,
-                    color: Colors.white,
-                  ),
-                ),
-                Container(
-                  height: 30.0,
-                  width: 1.0,
-                  color: Colors.white.withOpacity(0.5),
-                  margin: const EdgeInsets.only(right: 10.0),
-                ),
-                Expanded(
-                  child: TextFormField(
-                    controller: _passwordConfirmController,
-                    obscureText: false,
-                    style: TextStyle(color: Colors.white),
-                    decoration: InputDecoration(
-                        border: InputBorder.none,
-                        hintText: "Re-enter your password",
-                        hintStyle: TextStyle(
-                          color: Colors.white.withOpacity(0.5),
-                        )),
-                  ),
-                ),
-              ],
-            ),
+          AuthTextInput(
+            controller: _passwordConfirmController,
+            icon: Icons.lock_open,
+            hintText: "Re-enter your password",
+            obscureText: true,
           ),
-          Container(
-            margin: const EdgeInsets.only(top: 20.0),
-            padding: const EdgeInsets.only(left: 20.0, right: 20.0),
-            child: Row(
-              children: <Widget>[
-                Expanded(
-                  child: FlatButton(
-                    splashColor: Colors.white,
-                    color: Colors.white,
-                    disabledColor: Colors.white.withOpacity(0.5),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(30.0)),
-                    onPressed: _isLoading == true
-                        ? null
-                        : () {
-                            _signup();
-                          },
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: <Widget>[
-                        _isLoading
-                            ? Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 6.0),
-                                child: CircularProgressIndicator())
-                            : Expanded(
-                                child: Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 16.0),
-                                child: Text(
-                                  "SIGN UP",
-                                  style: TextStyle(color: Colors.blue),
-                                  textAlign: TextAlign.center,
-                                ),
-                              ))
-                      ],
-                    ),
-                  ),
-                )
-              ],
-            ),
+          AuthFlatButton(
+            text: 'SIGNUP',
+            onPressed: _isLoading == true
+                ? null
+                : () {
+                    _signup();
+                  },
+            isLoading: _isLoading,
+            mainButton: true,
           ),
-          Container(
-            margin: const EdgeInsets.only(top: 20.0),
-            padding: const EdgeInsets.only(left: 20.0, right: 20.0),
-            child: Row(
-              children: <Widget>[
-                Expanded(
-                  child: FlatButton(
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(30.0)),
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                    },
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: <Widget>[
-                        Expanded(
-                            child: Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 16.0),
-                          child: Text(
-                            "Already have an Account? Login here.",
-                            style: TextStyle(color: Colors.white),
-                            textAlign: TextAlign.center,
-                          ),
-                        ))
-                      ],
-                    ),
-                  ),
-                )
-              ],
-            ),
-          )
+          AuthFlatButton(
+            text: 'Already have an Account? Login here.',
+            onPressed: () => Navigator.of(context).pop(),
+            isLoading: _isLoading,
+            mainButton: false,
+          ),
         ],
       )),
     );
