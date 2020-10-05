@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart' as auth;
 import 'package:flutter/material.dart';
+import 'package:flutter_feedme_app/screens/feed_screen.dart';
 import 'package:flutter_feedme_app/screens/signup_screen.dart';
 import 'package:flutter_feedme_app/utils/snackbar_util.dart';
 import 'package:flutter_feedme_app/widgets/auth_flat_button_widget.dart';
@@ -33,6 +34,10 @@ class _LoginScreenState extends State<LoginScreen> {
               password: _passwordController.text.trim());
 
       _snackBarUtil.sendSnack(_scaffoldKey, "Login Successful.");
+      Navigator.push(context, MaterialPageRoute(builder: (ctx) {
+        return FeedScreen();
+      }));
+      // print(_user.toString());
     } catch (error) {
       _snackBarUtil.sendSnack(
           _scaffoldKey, (error as auth.FirebaseException).message);
