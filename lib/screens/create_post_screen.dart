@@ -1,7 +1,10 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart' as auth;
 import 'package:flutter_feedme_app/utils/snackbar_util.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 
 class CreatePostScreen extends StatefulWidget {
   @override
@@ -17,6 +20,8 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
   String _userUID;
   String _userDisplayName;
   bool _isLoading = false;
+  File _image;
+  final picker = ImagePicker();
 
   _post() async {
     if (_postTextController.text.trim().length == 0) {
@@ -29,8 +34,10 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
       _isLoading = true;
     });
 
+    DocumentReference ref;
+
     try {
-      await _firestore.collection("posts").add({
+      ref = await _firestore.collection("posts").add({
         "text": _postTextController.text.trim(),
         "owner_name": _userDisplayName,
         "owner": _userUID,
@@ -39,6 +46,15 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
         "likes_count": 0,
         "comments_count": 0,
       });
+
+      if (_image != null) {
+        _snackBarUtil.sendSnack(_key, "Uploadin image, please wait...");
+
+        String _url = await _uploadImageAndGetURL(ref.id, _image);
+
+        await ref.update({"image": _url});
+      }
+
       _snackBarUtil.sendSnack(_key, "Post created successfully.");
 
       Future.delayed(Duration(seconds: 1), () {
@@ -52,6 +68,61 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
         _isLoading = false;
       });
     }
+  }
+
+  _showModalBottomSheet() {
+    showModalBottomSheet(
+        context: context,
+        builder: (BuildContext ctx) {
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              ListTile(
+                leading: Icon(Icons.camera_alt),
+                title: Text('Camera'),
+                onTap: () async {
+                  PickedFile image = await picker.getImage(
+                    source: ImageSource.camera,
+                    maxHeight: 480,
+                    maxWidth: 480,
+                  );
+
+                  setState(() {
+                    _image = File(image.path);
+                  });
+                  Navigator.pop(context);
+                },
+              ),
+              ListTile(
+                leading: Icon(Icons.photo_album),
+                title: Text('Photo Album'),
+                onTap: () async {
+                  PickedFile image = await picker.getImage(
+                    source: ImageSource.gallery,
+                    maxHeight: 480,
+                    maxWidth: 480,
+                  );
+
+                  setState(() {
+                    _image = File(image.path);
+                  });
+                  Navigator.pop(context);
+                },
+              ),
+            ],
+          );
+        });
+  }
+
+  Future<String> _uploadImageAndGetURL(String filenName, File file) async {
+    FirebaseStorage _storage = FirebaseStorage.instance;
+    StorageUploadTask _task = _storage
+        .ref()
+        .child(filenName)
+        .putFile(file, StorageMetadata(contentType: 'image/png'));
+
+    final _downloadURL = await (await _task.onComplete).ref.getDownloadURL();
+    return _downloadURL;
   }
 
   @override
@@ -101,7 +172,11 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                       splashColor: Colors.blue,
                       color: Colors.blue,
                       disabledColor: Colors.blue.withOpacity(0.5),
-                      onPressed: _isLoading ? null : () {},
+                      onPressed: _isLoading
+                          ? null
+                          : () {
+                              _showModalBottomSheet();
+                            },
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: <Widget>[
@@ -168,7 +243,40 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                   ),
                 )
               ],
-            )
+            ),
+            _image == null
+                ? SizedBox.shrink()
+                : Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: <Widget>[
+                        Stack(
+                          children: <Widget>[
+                            Container(
+                              child: Image.file(
+                                _image,
+                                fit: BoxFit.cover,
+                              ),
+                              width: 150,
+                              height: 150,
+                            ),
+                            Positioned(
+                                top: 4.0,
+                                right: 4.0,
+                                child: IconButton(
+                                    icon: Icon(Icons.close),
+                                    color: Colors.white,
+                                    onPressed: () {
+                                      setState(() {
+                                        _image = null;
+                                      });
+                                    })),
+                          ],
+                        ),
+                      ],
+                    ),
+                  )
           ],
         ),
       ),
